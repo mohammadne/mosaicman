@@ -16,15 +16,14 @@ type Storage interface {
 }
 
 type storage struct {
-	savePath string
-	logger   logger.Logger
-	expires  time.Duration
-	cmd      redis.Cmdable
+	logger  logger.Logger
+	expires time.Duration
+	cmd     redis.Cmdable
 }
 
-func New(cfg *Config, savePath string, lg logger.Logger) (Storage, error) {
-	s := &storage{savePath: savePath, logger: lg}
-	s.expires = time.Second * time.Duration(cfg.ExpirationTime)
+func New(cfg *Config, lg logger.Logger) (Storage, error) {
+	expires := time.Duration(cfg.ExpirationTime)
+	s := &storage{logger: lg, expires: time.Second * expires}
 
 	if Mode(cfg.Mode) == Cluster {
 		s.cmd = newClusterRedis(cfg)

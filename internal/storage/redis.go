@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/mohammadne/mosaicman/internal"
 	"github.com/mohammadne/mosaicman/internal/models"
 	"github.com/mohammadne/mosaicman/pkg/logger"
 	"github.com/mohammadne/mosaicman/pkg/utils"
@@ -62,5 +63,5 @@ func (s *storage) Retrieve(ctx context.Context, md *models.Metadata) (string, er
 
 func (s *storage) getPath(uuid string) string {
 	name := fmt.Sprintf("%s.jpg", uuid)
-	return fmt.Sprintf("%s/%s", s.savePath, name)
+	return fmt.Sprintf("%s/%s", internal.OriginalsDir, name)
 }

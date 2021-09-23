@@ -28,7 +28,7 @@ func main(cmd *cobra.Command, _ []string) {
 
 	lg := logger.NewZap(configs.Logger)
 
-	storage, err := storage.New(configs.Storage, configs.SavePath, lg)
+	storage, err := storage.New(configs.Storage, lg)
 	if err != nil {
 		lg.Fatal("error creating redis storage", logger.Error(err))
 	}

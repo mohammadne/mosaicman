@@ -1,6 +1,6 @@
 <!-- LOGO -->
 <p align="center">
-  <img src="assets/app/logo.svg" />
+  <img src="assets/logo.svg" />
 </p>
 
 <!-- BADGES -->
@@ -22,7 +22,7 @@
 
 <!-- RESULT -->
 <p align="center">
-  <img src="assets/app/result.png" />
+  <img src="assets/result.png" />
 </p>
 
 ## OPTIONS

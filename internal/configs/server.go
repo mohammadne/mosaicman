@@ -7,10 +7,9 @@ import (
 )
 
 type server struct {
-	Address  string
-	SavePath string `split_words:"true"`
-	Logger   *logger.Config
-	Storage  *storage.Config
+	Address string
+	Logger  *logger.Config
+	Storage *storage.Config
 }
 
 func Server(env string) *server {
@@ -39,8 +38,6 @@ func (configs *server) loadProd() {
 
 func (configs *server) loadDev() {
 	configs.Address = "localhost:8080"
-
-	configs.SavePath = "assets/uploads"
 
 	configs.Logger = &logger.Config{
 		Development:      true,
