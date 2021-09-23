@@ -16,7 +16,7 @@
 # MOSAIC MAN
 > simple but poweful mosaic picture generator
 >
-> it's completely free and a highly customizable mosaic server 
+> it's completely free with a highly customizable mosaic server 
 
 ## RESULT
 
@@ -32,3 +32,7 @@
 2. tile size
 
 3. transparency
+
+### TODOs
+
+- we only support `jpg` format

@@ -20,7 +20,7 @@ func New(address string, storage storage.Storage, lg logger.Logger) *server {
 	server.echo.HideBanner = true
 
 	server.echo.POST("/upload", server.upload)
-	server.echo.POST("/generate", server.generate)
+	server.echo.POST("/process", server.process)
 
 	return server
 }

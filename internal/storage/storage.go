@@ -12,7 +12,7 @@ import (
 
 type Storage interface {
 	Persist(context.Context, io.Reader, *models.Metadata) error
-	Retrieve(context.Context, *models.Metadata) (interface{}, error)
+	Retrieve(context.Context, *models.Metadata) (string, error)
 }
 
 type storage struct {

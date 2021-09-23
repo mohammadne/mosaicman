@@ -58,11 +58,42 @@ func (server *server) upload(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]string{
-		"message": "Image uploaded successfully",
-		"uuid":    metadata.UUID,
+		"message":    "Image uploaded successfully",
+		"image-uuid": metadata.UUID,
 	})
 }
 
-func (server *server) generate(c echo.Context) error {
-	return nil
+type request struct {
+	Transparancy uint16 `json:"transparency"`
+	UUID         string `json:"image-uuid"`
+}
+
+var (
+	invalidDataErr = responseErr{
+		Message: "image file is missed",
+	}
+
+	imageNotFoundErr = responseErr{
+		Message: "image file not found",
+		Help:    "please upload your new image and try again",
+	}
+)
+
+func (server *server) process(c echo.Context) error {
+	requestData := new(request)
+	if err := c.Bind(requestData); err != nil {
+		return c.JSON(http.StatusBadRequest, invalidDataErr)
+	}
+
+	metadata := &models.Metadata{
+		IP:   c.Request().RemoteAddr,
+		UUID: requestData.UUID,
+	}
+
+	path, err := server.storage.Retrieve(context.TODO(), metadata)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, imageNotFoundErr)
+	}
+
+	return c.Attachment(path, "result.jpg")
 }

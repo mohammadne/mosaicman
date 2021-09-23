@@ -2,9 +2,11 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/mohammadne/mosaicman/internal/models"
 	"github.com/mohammadne/mosaicman/pkg/logger"
 	"github.com/mohammadne/mosaicman/pkg/utils"
@@ -25,10 +27,7 @@ func (s *storage) Persist(ctx context.Context, file io.Reader, md *models.Metada
 }
 
 func (s *storage) persistFile(ctx context.Context, file io.Reader, uuid string) error {
-	name := fmt.Sprintf("%s.jpg", uuid)
-	path := fmt.Sprintf("%s/%s", s.savePath, name)
-
-	destination, err := utils.CreateFile(path)
+	destination, err := utils.CreateFile(s.getPath(uuid))
 	if err != nil {
 		return err
 	}
@@ -41,6 +40,27 @@ func (s *storage) persistFile(ctx context.Context, file io.Reader, uuid string) 
 	return nil
 }
 
-func (storage *storage) Retrieve(ctx context.Context, md *models.Metadata) (interface{}, error) {
-	return nil, nil
+func (s *storage) Retrieve(ctx context.Context, md *models.Metadata) (string, error) {
+	value, err := s.cmd.Get(ctx, md.UUID).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return "", errors.New("no matching record found in redis database")
+		}
+
+		s.logger.Error("error getting from redis", logger.Error(err))
+		return "", err
+	}
+
+	if value != md.IP {
+		err = errors.New("requster IP doesn't match with requested image IP")
+		s.logger.Error("error getting from redis", logger.Error(err))
+		return "", err
+	}
+
+	return s.getPath(md.UUID), nil
+}
+
+func (s *storage) getPath(uuid string) string {
+	name := fmt.Sprintf("%s.jpg", uuid)
+	return fmt.Sprintf("%s/%s", s.savePath, name)
 }
