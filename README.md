@@ -14,7 +14,7 @@
 
 <!-- TITLE -->
 # MOSAIC MAN
-> mosaic picture generator
+> simple but poweful mosaic picture generator
 >
 > it's completely free and a highly customizable mosaic server 
 
@@ -22,7 +22,7 @@
 
 <!-- RESULT -->
 <p align="center">
-  <img src="assets/convert.png" />
+  <img src="assets/result.png" />
 </p>
 
 ## OPTIONS
