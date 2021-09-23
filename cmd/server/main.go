@@ -1,6 +1,9 @@
 package server
 
 import (
+	"github.com/mohammadne/mosaicman/internal/configs"
+	"github.com/mohammadne/mosaicman/internal/network"
+	"github.com/mohammadne/mosaicman/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -18,4 +21,14 @@ func Command() *cobra.Command {
 	return cmd
 }
 
-func main(cmd *cobra.Command, _ []string) {}
+func main(cmd *cobra.Command, _ []string) {
+	env := cmd.Flag("env").Value.String()
+	configs := configs.Server(env)
+
+	lg := logger.NewZap(configs.Logger)
+
+	server := network.New(configs.Address, configs.SavePath, lg)
+	if err := server.Serve(); err != nil {
+		lg.Fatal("starting server failed", logger.Error(err))
+	}
+}

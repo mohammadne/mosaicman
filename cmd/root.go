@@ -8,9 +8,8 @@ import (
 const (
 	errExecuteCMD = "failed to execute root command"
 
-	use   = "mosaicman"
-	short = "short"
-	long  = `long`
+	short = "short description"
+	long  = `long description`
 )
 
 func main() {
@@ -18,7 +17,7 @@ func main() {
 	serverCmd := server.Command()
 
 	// create root command and add sub-commands to it
-	cmd := &cobra.Command{Use: use, Short: short, Long: long}
+	cmd := &cobra.Command{Short: short, Long: long}
 	cmd.AddCommand(serverCmd)
 
 	// run cobra root cmd

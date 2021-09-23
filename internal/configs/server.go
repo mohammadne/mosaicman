@@ -6,36 +6,39 @@ import (
 )
 
 type server struct {
-	Address string
-	Logger  *logger.Config
+	Address  string
+	SavePath string `split_words:"true"`
+	Logger   *logger.Config
 }
 
 func Server(env string) *server {
-	config := &server{}
+	configs := &server{}
 
 	switch env {
 	case "prod":
-		config.loadProd()
+		configs.loadProd()
 	default:
-		config.loadDev()
+		configs.loadDev()
 	}
 
-	return config
+	return configs
 }
 
-func (config *server) loadProd() {
-	config.Logger = &logger.Config{}
+func (configs *server) loadProd() {
+	configs.Logger = &logger.Config{}
 
 	// process
-	envconfig.MustProcess("", config)
-	envconfig.MustProcess("logger", config.Logger)
+	envconfig.MustProcess("", configs)
+	envconfig.MustProcess("logger", configs.Logger)
 
 }
 
-func (config *server) loadDev() {
-	config.Address = "localhost:8080"
+func (configs *server) loadDev() {
+	configs.Address = "localhost:8080"
 
-	config.Logger = &logger.Config{
+	configs.SavePath = "assets/uploads"
+
+	configs.Logger = &logger.Config{
 		Development:      true,
 		EnableCaller:     true,
 		EnableStacktrace: false,

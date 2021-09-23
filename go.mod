@@ -3,6 +3,7 @@ module github.com/mohammadne/mosaicman
 go 1.17
 
 require (
+	github.com/google/uuid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo/v4 v4.6.0
 	github.com/spf13/cobra v1.2.1
