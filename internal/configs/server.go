@@ -48,8 +48,8 @@ func (configs *server) loadDev() {
 	}
 
 	configs.Storage = &storage.Config{
-		Mode:           0,
-		URL:            "localhost:6379",
-		ExpirationTime: 10,
+		Mode:       0,
+		URL:        "localhost:6379",
+		Expiration: 60 * 5,
 	}
 }

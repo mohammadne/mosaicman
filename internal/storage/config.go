@@ -2,8 +2,6 @@ package storage
 
 import (
 	"time"
-
-	"github.com/go-redis/redis/v8"
 )
 
 type Mode uint8
@@ -20,7 +18,7 @@ type Config struct {
 	MasterURL          string        `split_words:"true"`
 	SlaveURL           string        `split_words:"true"`
 	Password           string        `default:"" split_words:"true"`
-	ExpirationTime     int           `default:"10" split_words:"true"`
+	Expiration         int           `default:"10"`
 	PoolSize           int           `split_words:"true" default:"10"`
 	MaxRetries         int           `split_words:"true" default:"0"`
 	ReadTimeout        time.Duration `split_words:"true" default:"3s"`
@@ -33,33 +31,33 @@ type Config struct {
 }
 
 // newSingleRedis returns a new `RedisHandler` with a single Redis client.
-func newSingleRedis(cfg *Config) *redis.Client {
-	return redis.NewClient(&redis.Options{
-		Addr:               cfg.URL,
-		Password:           cfg.Password,
-		MaxRetries:         cfg.MaxRetries,
-		MinRetryBackoff:    cfg.MinRetryBackoff,
-		MaxRetryBackoff:    cfg.MaxRetryBackoff,
-		ReadTimeout:        cfg.ReadTimeout,
-		PoolSize:           cfg.PoolSize,
-		PoolTimeout:        cfg.PoolTimeout,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
-	})
-}
+// func newSingleRedis(cfg *Config) *redis.Client {
+// 	return redis.NewClient(&redis.Options{
+// 		Addr:               cfg.URL,
+// 		Password:           cfg.Password,
+// 		MaxRetries:         cfg.MaxRetries,
+// 		MinRetryBackoff:    cfg.MinRetryBackoff,
+// 		MaxRetryBackoff:    cfg.MaxRetryBackoff,
+// 		ReadTimeout:        cfg.ReadTimeout,
+// 		PoolSize:           cfg.PoolSize,
+// 		PoolTimeout:        cfg.PoolTimeout,
+// 		IdleTimeout:        cfg.IdleTimeout,
+// 		IdleCheckFrequency: cfg.IdleCheckFrequency,
+// 	})
+// }
 
 // newClusterRedis returns a new `RedisHandler` with a clustered Redis client.
-func newClusterRedis(cfg *Config) *redis.ClusterClient {
-	return redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs:              []string{cfg.MasterURL, cfg.SlaveURL},
-		Password:           cfg.Password,
-		MaxRetries:         cfg.MaxRetries,
-		MinRetryBackoff:    cfg.MinRetryBackoff,
-		MaxRetryBackoff:    cfg.MaxRetryBackoff,
-		ReadTimeout:        cfg.ReadTimeout,
-		PoolSize:           cfg.PoolSize,
-		PoolTimeout:        cfg.PoolTimeout,
-		IdleTimeout:        cfg.IdleTimeout,
-		IdleCheckFrequency: cfg.IdleCheckFrequency,
-	})
-}
+// func newClusterRedis(cfg *Config) *redis.ClusterClient {
+// 	return redis.NewClusterClient(&redis.ClusterOptions{
+// 		Addrs:              []string{cfg.MasterURL, cfg.SlaveURL},
+// 		Password:           cfg.Password,
+// 		MaxRetries:         cfg.MaxRetries,
+// 		MinRetryBackoff:    cfg.MinRetryBackoff,
+// 		MaxRetryBackoff:    cfg.MaxRetryBackoff,
+// 		ReadTimeout:        cfg.ReadTimeout,
+// 		PoolSize:           cfg.PoolSize,
+// 		PoolTimeout:        cfg.PoolTimeout,
+// 		IdleTimeout:        cfg.IdleTimeout,
+// 		IdleCheckFrequency: cfg.IdleCheckFrequency,
+// 	})
+// }

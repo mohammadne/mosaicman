@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/gomodule/redigo/redis"
 	"github.com/mohammadne/mosaicman/internal"
 	"github.com/mohammadne/mosaicman/internal/models"
 	"github.com/mohammadne/mosaicman/pkg/logger"
@@ -19,7 +19,13 @@ func (s *storage) Persist(ctx context.Context, file io.Reader, md *models.Metada
 		return err
 	}
 
-	if err := s.cmd.Set(ctx, md.UUID, md.IP, s.expires).Err(); err != nil {
+	connection, err := s.newConnection(ctx)
+	if err != nil {
+		return err
+	}
+	defer connection.Close()
+
+	if _, err := connection.Do("SET", md.UUID, md.IP, "EX", s.config.Expiration); err != nil {
 		s.logger.Error("error saving metadata", logger.Error(err))
 		return err
 	}
@@ -42,9 +48,15 @@ func (s *storage) persistFile(ctx context.Context, file io.Reader, uuid string) 
 }
 
 func (s *storage) Retrieve(ctx context.Context, md *models.Metadata) (string, error) {
-	value, err := s.cmd.Get(ctx, md.UUID).Result()
+	connection, err := s.newConnection(ctx)
 	if err != nil {
-		if err == redis.Nil {
+		return "", err
+	}
+	defer connection.Close()
+
+	value, err := redis.String(connection.Do("GET", md.UUID))
+	if err != nil {
+		if err == redis.ErrNil {
 			return "", errors.New("no matching record found in redis database")
 		}
 

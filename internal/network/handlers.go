@@ -2,6 +2,7 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -64,7 +65,7 @@ func (server *server) upload(c echo.Context) error {
 }
 
 type request struct {
-	Transparancy uint16 `json:"transparency"`
+	Transparancy int    `json:"transparency"`
 	UUID         string `json:"image-uuid"`
 }
 
@@ -92,6 +93,7 @@ func (server *server) process(c echo.Context) error {
 
 	path, err := server.storage.Retrieve(context.TODO(), metadata)
 	if err != nil {
+		fmt.Println(err)
 		return c.JSON(http.StatusBadRequest, imageNotFoundErr)
 	}
 
