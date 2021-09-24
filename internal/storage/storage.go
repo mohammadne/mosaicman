@@ -16,7 +16,7 @@ import (
 
 type Storage interface {
 	Persist(context.Context, io.Reader, *models.Metadata) error
-	Retrieve(context.Context, *models.Metadata) (string, error)
+	Retrieve(context.Context, *models.Metadata) (*os.File, error)
 }
 
 type storage struct {

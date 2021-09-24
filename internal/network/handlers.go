@@ -2,12 +2,13 @@ package network
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/mohammadne/mosaicman/internal/models"
+	"github.com/mohammadne/mosaicman/internal/mosaic"
+	"github.com/mohammadne/mosaicman/pkg/logger"
 	"github.com/mohammadne/mosaicman/pkg/utils"
 )
 
@@ -65,8 +66,8 @@ func (server *server) upload(c echo.Context) error {
 }
 
 type request struct {
-	Transparancy int    `json:"transparency"`
-	UUID         string `json:"image-uuid"`
+	UUID    string         `json:"image-uuid"`
+	Options models.Options `json:"options"`
 }
 
 var (
@@ -77,6 +78,11 @@ var (
 	imageNotFoundErr = responseErr{
 		Message: "image file not found",
 		Help:    "please upload your new image and try again",
+	}
+
+	processErr = responseErr{
+		Message: "an internal server error occured",
+		Help:    "please try later",
 	}
 )
 
@@ -91,11 +97,18 @@ func (server *server) process(c echo.Context) error {
 		UUID: requestData.UUID,
 	}
 
-	path, err := server.storage.Retrieve(context.TODO(), metadata)
+	original, err := server.storage.Retrieve(context.TODO(), metadata)
 	if err != nil {
-		fmt.Println(err)
+		server.logger.Error("error in retrieving original", logger.Error(err))
 		return c.JSON(http.StatusBadRequest, imageNotFoundErr)
 	}
+	defer original.Close()
 
-	return c.Attachment(path, "result.jpg")
+	mosaic, err := mosaic.Process(original, requestData.Options)
+	if err != nil {
+		server.logger.Error("error in processing mosaic", logger.Error(err))
+		return c.JSON(http.StatusInternalServerError, processErr)
+	}
+
+	return c.JSON(http.StatusOK, mosaic)
 }

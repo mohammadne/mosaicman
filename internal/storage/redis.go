@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/mohammadne/mosaicman/internal"
@@ -47,30 +48,30 @@ func (s *storage) persistFile(ctx context.Context, file io.Reader, uuid string) 
 	return nil
 }
 
-func (s *storage) Retrieve(ctx context.Context, md *models.Metadata) (string, error) {
+func (s *storage) Retrieve(ctx context.Context, md *models.Metadata) (*os.File, error) {
 	connection, err := s.newConnection(ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer connection.Close()
 
 	value, err := redis.String(connection.Do("GET", md.UUID))
 	if err != nil {
 		if err == redis.ErrNil {
-			return "", errors.New("no matching record found in redis database")
+			return nil, errors.New("no matching record found in redis database")
 		}
 
 		s.logger.Error("error getting from redis", logger.Error(err))
-		return "", err
+		return nil, err
 	}
 
 	if value != md.IP {
 		err = errors.New("requster IP doesn't match with requested image IP")
 		s.logger.Error("error getting from redis", logger.Error(err))
-		return "", err
+		return nil, err
 	}
 
-	return s.getPath(md.UUID), nil
+	return os.Open(s.getPath(md.UUID))
 }
 
 func (s *storage) getPath(uuid string) string {
