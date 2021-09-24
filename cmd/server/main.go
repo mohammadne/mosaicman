@@ -4,6 +4,7 @@ import (
 	"github.com/mohammadne/mosaicman/internal/configs"
 	"github.com/mohammadne/mosaicman/internal/network"
 	"github.com/mohammadne/mosaicman/internal/storage"
+	"github.com/mohammadne/mosaicman/internal/tiles"
 	"github.com/mohammadne/mosaicman/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,12 @@ func main(cmd *cobra.Command, _ []string) {
 		lg.Fatal("error creating redis storage", logger.Error(err))
 	}
 
-	server := network.New(configs.Address, storage, lg)
+	tiles, err := tiles.New(lg)
+	if err != nil {
+		lg.Fatal("error creating tiles", logger.Error(err))
+	}
+
+	server := network.New(configs.Address, storage, tiles, lg)
 	if err := server.Serve(); err != nil {
 		lg.Fatal("starting server failed", logger.Error(err))
 	}

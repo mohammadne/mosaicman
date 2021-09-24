@@ -104,11 +104,16 @@ func (server *server) process(c echo.Context) error {
 	}
 	defer original.Close()
 
-	mosaic, err := mosaic.Process(original, requestData.Options)
+	mosaic, err := mosaic.Process(original, requestData.Options, server.tiles)
 	if err != nil {
 		server.logger.Error("error in processing mosaic", logger.Error(err))
 		return c.JSON(http.StatusInternalServerError, processErr)
 	}
 
-	return c.JSON(http.StatusOK, mosaic)
+	// _, err = c.Response().Write(mosaic)
+	// return err
+
+	// return c.JSON(http.StatusOK, mosaic)
+
+	return c.Attachment(mosaic, "mosaic-result.jpg")
 }

@@ -2,17 +2,19 @@ package mosaic
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"image"
 	"image/draw"
 	"image/jpeg"
+	"io"
 	"os"
 	"sync"
+
+	"github.com/mohammadne/mosaicman/internal/tiles"
 )
 
-func fanIn(r image.Rectangle, c1, c2, c3, c4 <-chan image.Image) <-chan string {
-	c := make(chan string)
+func fanIn(r image.Rectangle, c1, c2, c3, c4 <-chan image.Image) <-chan io.Reader {
+	c := make(chan io.Reader)
 	// start a goroutine
 	go func() {
 		var wg sync.WaitGroup
@@ -43,13 +45,13 @@ func fanIn(r image.Rectangle, c1, c2, c3, c4 <-chan image.Image) <-chan string {
 		wg.Wait()
 		buf2 := new(bytes.Buffer)
 		jpeg.Encode(buf2, newimage, nil)
-		c <- base64.StdEncoding.EncodeToString(buf2.Bytes())
+		c <- buf2
 	}()
 
 	return c
 }
 
-func fanOut(original image.Image, db *DB, tileSize, x1, y1, x2, y2 int) <-chan image.Image {
+func fanOut(original image.Image, db *tiles.Database, tileSize, x1, y1, x2, y2 int) <-chan image.Image {
 	c := make(chan image.Image)
 	sp := image.Point{0, 0}
 	go func() {
@@ -58,7 +60,7 @@ func fanOut(original image.Image, db *DB, tileSize, x1, y1, x2, y2 int) <-chan i
 			for x := x1; x < x2; x = x + tileSize {
 				r, g, b, _ := original.At(x, y).RGBA()
 				color := [3]float64{float64(r), float64(g), float64(b)}
-				nearest := db.nearest(color)
+				nearest := nearest(db, color)
 				file, err := os.Open(nearest)
 				if err == nil {
 					img, _, err := image.Decode(file)
