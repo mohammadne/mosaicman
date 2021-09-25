@@ -27,7 +27,7 @@ func resize(in image.Image, newWidth int) image.NRGBA {
 func nearest(db *tiles.Database, target [3]float64) string {
 	var filename string
 	db.Mutex.Lock()
-	smallest := 1000000.0
+	smallest := 100000.0
 	for k, v := range db.Store {
 		dist := distance(target, v)
 		if dist < smallest {

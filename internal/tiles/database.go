@@ -19,6 +19,7 @@ type DataModel map[string][3]float64
 // loadTilesDB populates tiles database in memory
 func loadTilesDB() (Database, error) {
 	fmt.Println("Start populating tiles db ...")
+
 	db := make(DataModel)
 	files, _ := ioutil.ReadDir("static/tiles/cats")
 	for _, f := range files {
@@ -36,6 +37,7 @@ func loadTilesDB() (Database, error) {
 		}
 		file.Close()
 	}
+
 	fmt.Println("Finished populating tiles db.")
 
 	return Database{

@@ -33,10 +33,6 @@
 
 ### TODOs
 
-- only square image is supported (width == height)
-
 - we only support `jpg` format
-
-- enhance mosaic algorithm
 
 - increase tile dataset and support others rather than only cats dataset
