@@ -16,6 +16,7 @@ import (
 
 type Storage interface {
 	Persist(context.Context, io.Reader, *models.Metadata) error
+	Validate(ctx context.Context, md *models.Metadata) error
 	Retrieve(context.Context, *models.Metadata) (*os.File, error)
 }
 

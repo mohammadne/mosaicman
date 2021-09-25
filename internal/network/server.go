@@ -23,6 +23,7 @@ func New(address string, s storage.Storage, t tiles.Tiles, lg logger.Logger) *se
 
 	server.echo.POST("/upload", server.upload)
 	server.echo.POST("/process", server.process)
+	server.echo.GET("/get/:image-uuid", server.get)
 
 	return server
 }

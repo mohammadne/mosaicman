@@ -2,10 +2,12 @@ package network
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/mohammadne/mosaicman/internal"
 	"github.com/mohammadne/mosaicman/internal/models"
 	"github.com/mohammadne/mosaicman/internal/mosaic"
 	"github.com/mohammadne/mosaicman/pkg/logger"
@@ -104,16 +106,32 @@ func (server *server) process(c echo.Context) error {
 	}
 	defer original.Close()
 
-	mosaic, err := mosaic.Process(original, requestData.Options, server.tiles)
+	err = mosaic.Process(original, metadata.UUID, requestData.Options, server.tiles)
 	if err != nil {
 		server.logger.Error("error in processing mosaic", logger.Error(err))
 		return c.JSON(http.StatusInternalServerError, processErr)
 	}
 
-	// _, err = c.Response().Write(mosaic)
-	// return err
+	return c.String(http.StatusCreated, "mosaic image has been created")
+}
 
-	// return c.JSON(http.StatusOK, mosaic)
+func (server *server) get(c echo.Context) error {
+	uuid := c.Param("image-uuid")
+	if uuid == "" {
+		return c.String(http.StatusBadRequest, "image uuid is missing")
+	}
 
-	return c.Attachment(mosaic, "mosaic-result.jpg")
+	metadata := &models.Metadata{
+		IP:   c.Request().RemoteAddr,
+		UUID: uuid,
+	}
+
+	err := server.storage.Validate(context.TODO(), metadata)
+	if err != nil {
+		server.logger.Error("error in retrieving original", logger.Error(err))
+		return c.JSON(http.StatusBadRequest, imageNotFoundErr)
+	}
+
+	path := fmt.Sprintf("%s/%s.jpg", internal.MosaicsDir, uuid)
+	return c.Attachment(path, "mosaic-result.jpg")
 }

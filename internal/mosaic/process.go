@@ -1,45 +1,58 @@
 package mosaic
 
 import (
+	"fmt"
 	"image"
 	"image/jpeg"
 	"io"
-	"os"
 
+	"github.com/mohammadne/mosaicman/internal"
 	"github.com/mohammadne/mosaicman/internal/models"
 	"github.com/mohammadne/mosaicman/internal/tiles"
+	"github.com/mohammadne/mosaicman/pkg/utils"
 )
 
-func Process(org io.Reader, opts models.Options, t tiles.Tiles) (string, error) {
-	image, _, err := image.Decode(org)
+func Process(file io.Reader, uuid string, opts models.Options, t tiles.Tiles) error {
+	original, _, err := image.Decode(file)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	db := t.CloneTilesDB()
-	bounds := image.Bounds()
+	bounds := original.Bounds()
 
 	// fan-out
-	part1 := fanOut(image, &db, opts.TileSize, bounds.Min.X, bounds.Min.Y, bounds.Max.X/2, bounds.Max.Y/2)
-	part2 := fanOut(image, &db, opts.TileSize, bounds.Max.X/2, bounds.Min.Y, bounds.Max.X, bounds.Max.Y/2)
-	part3 := fanOut(image, &db, opts.TileSize, bounds.Min.X, bounds.Max.Y/2, bounds.Max.X/2, bounds.Max.Y)
-	part4 := fanOut(image, &db, opts.TileSize, bounds.Max.X/2, bounds.Max.Y/2, bounds.Max.X, bounds.Max.Y)
+	part1 := fanOut(original, &db, opts.TileSize, bounds.Min.X, bounds.Min.Y, bounds.Max.X/2, bounds.Max.Y/2)
+	part2 := fanOut(original, &db, opts.TileSize, bounds.Max.X/2, bounds.Min.Y, bounds.Max.X, bounds.Max.Y/2)
+	part3 := fanOut(original, &db, opts.TileSize, bounds.Min.X, bounds.Max.Y/2, bounds.Max.X/2, bounds.Max.Y)
+	part4 := fanOut(original, &db, opts.TileSize, bounds.Max.X/2, bounds.Max.Y/2, bounds.Max.X, bounds.Max.Y)
 
 	// fan-in
 	combine := fanIn(bounds, part1, part2, part3, part4)
 
-	jpgI, err := jpeg.Decode(<-combine)
+	mosaic, err := jpeg.Decode(<-combine)
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	out, _ := os.Create("./img.jpeg")
-	defer out.Close()
+	mask := image.NewNRGBA(image.Rect(bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y))
+	res := backgroundBellowForeground(mask, original, mosaic)
 
-	err = jpeg.Encode(out, jpgI, nil)
+	return persist(res, uuid)
+}
+
+func persist(image image.Image, uuid string) error {
+	path := fmt.Sprintf("%s/%s.jpg", internal.MosaicsDir, uuid)
+	destination, err := utils.CreateFile(path)
 	if err != nil {
-		return "", err
+		return err
+	}
+	defer destination.Close()
+
+	err = jpeg.Encode(destination, image, nil)
+	if err != nil {
+		return err
 	}
 
-	return "./img.jpeg", nil
+	return nil
 }

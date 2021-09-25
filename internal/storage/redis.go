@@ -15,7 +15,7 @@ import (
 )
 
 func (s *storage) Persist(ctx context.Context, file io.Reader, md *models.Metadata) error {
-	if err := s.persistFile(ctx, file, md.UUID); err != nil {
+	if err := s.persistFile(file, md.UUID); err != nil {
 		s.logger.Error("error saving file", logger.Error(err))
 		return err
 	}
@@ -34,7 +34,7 @@ func (s *storage) Persist(ctx context.Context, file io.Reader, md *models.Metada
 	return nil
 }
 
-func (s *storage) persistFile(ctx context.Context, file io.Reader, uuid string) error {
+func (s *storage) persistFile(file io.Reader, uuid string) error {
 	destination, err := utils.CreateFile(s.getPath(uuid))
 	if err != nil {
 		return err
@@ -42,6 +42,32 @@ func (s *storage) persistFile(ctx context.Context, file io.Reader, uuid string) 
 	defer destination.Close()
 
 	if _, err = io.Copy(destination, file); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *storage) Validate(ctx context.Context, md *models.Metadata) error {
+	connection, err := s.newConnection(ctx)
+	if err != nil {
+		return err
+	}
+	defer connection.Close()
+
+	value, err := redis.String(connection.Do("GET", md.UUID))
+	if err != nil {
+		if err == redis.ErrNil {
+			return errors.New("no matching record found in redis database")
+		}
+
+		s.logger.Error("error getting from redis", logger.Error(err))
+		return err
+	}
+
+	if value != md.IP {
+		err = errors.New("requster IP doesn't match with requested image IP")
+		s.logger.Error("error getting from redis", logger.Error(err))
 		return err
 	}
 
