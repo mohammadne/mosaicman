@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"image/png"
 	"io"
 
 	"github.com/mohammadne/mosaicman/internal"
@@ -12,7 +13,7 @@ import (
 	"github.com/mohammadne/mosaicman/pkg/utils"
 )
 
-func Process(file io.Reader, uuid string, opts models.Options, t tiles.Tiles) error {
+func Process(file io.Reader, uuid string, opts *models.Options, t tiles.Tiles) error {
 	original, _, err := image.Decode(file)
 	if err != nil {
 		return err
@@ -22,21 +23,20 @@ func Process(file io.Reader, uuid string, opts models.Options, t tiles.Tiles) er
 	bounds := original.Bounds()
 
 	// fan-out
-	part1 := fanOut(original, &db, opts.TileSize, bounds.Min.X, bounds.Min.Y, bounds.Max.X/2, bounds.Max.Y/2)
-	part2 := fanOut(original, &db, opts.TileSize, bounds.Max.X/2, bounds.Min.Y, bounds.Max.X, bounds.Max.Y/2)
-	part3 := fanOut(original, &db, opts.TileSize, bounds.Min.X, bounds.Max.Y/2, bounds.Max.X/2, bounds.Max.Y)
-	part4 := fanOut(original, &db, opts.TileSize, bounds.Max.X/2, bounds.Max.Y/2, bounds.Max.X, bounds.Max.Y)
+	part1 := fanOut(original, &db, opts, bounds.Min.X, bounds.Min.Y, bounds.Max.X/2, bounds.Max.Y/2)
+	part2 := fanOut(original, &db, opts, bounds.Max.X/2, bounds.Min.Y, bounds.Max.X, bounds.Max.Y/2)
+	part3 := fanOut(original, &db, opts, bounds.Min.X, bounds.Max.Y/2, bounds.Max.X/2, bounds.Max.Y)
+	part4 := fanOut(original, &db, opts, bounds.Max.X/2, bounds.Max.Y/2, bounds.Max.X, bounds.Max.Y)
 
 	// fan-in
 	combine := fanIn(bounds, part1, part2, part3, part4)
 
-	mosaic, err := jpeg.Decode(<-combine)
+	mosaic, err := png.Decode(<-combine)
 	if err != nil {
 		return err
 	}
 
-	mask := image.NewNRGBA(image.Rect(bounds.Min.X, bounds.Min.Y, bounds.Max.X, bounds.Max.Y))
-	res := backgroundBellowForeground(mask, original, mosaic)
+	res := watermark(original, mosaic)
 
 	return persist(res, uuid)
 }

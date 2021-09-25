@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/color"
 	"image/draw"
-	"image/jpeg"
+	"image/png"
 	"io"
 	"os"
 	"sync"
 
+	"github.com/mohammadne/mosaicman/internal/models"
 	"github.com/mohammadne/mosaicman/internal/tiles"
 )
 
@@ -44,20 +46,20 @@ func fanIn(r image.Rectangle, c1, c2, c3, c4 <-chan image.Image) <-chan io.Reade
 		// wait till all copy goroutines are complete
 		wg.Wait()
 		buf2 := new(bytes.Buffer)
-		jpeg.Encode(buf2, newimage, nil)
+		png.Encode(buf2, newimage)
 		c <- buf2
 	}()
 
 	return c
 }
 
-func fanOut(original image.Image, db *tiles.Database, tileSize, x1, y1, x2, y2 int) <-chan image.Image {
+func fanOut(original image.Image, db *tiles.Database, opts *models.Options, x1, y1, x2, y2 int) <-chan image.Image {
 	c := make(chan image.Image)
 	sp := image.Point{0, 0}
 	go func() {
 		newimage := image.NewNRGBA(image.Rect(x1, y1, x2, y2))
-		for y := y1; y < y2; y = y + tileSize {
-			for x := x1; x < x2; x = x + tileSize {
+		for y := y1; y < y2; y = y + opts.TileSize {
+			for x := x1; x < x2; x = x + opts.TileSize {
 				r, g, b, _ := original.At(x, y).RGBA()
 				color := [3]float64{float64(r), float64(g), float64(b)}
 				nearest := nearest(db, color)
@@ -65,9 +67,9 @@ func fanOut(original image.Image, db *tiles.Database, tileSize, x1, y1, x2, y2 i
 				if err == nil {
 					img, _, err := image.Decode(file)
 					if err == nil {
-						t := resize(img, tileSize)
+						t := resize(img, opts.TileSize)
 						tile := t.SubImage(t.Bounds())
-						tileBounds := image.Rect(x, y, x+tileSize, y+tileSize)
+						tileBounds := image.Rect(x, y, x+opts.TileSize, y+opts.TileSize)
 						draw.Draw(newimage, tileBounds, tile, sp, draw.Src)
 					} else {
 						fmt.Println("error in decoding nearest", err, nearest)
@@ -78,6 +80,23 @@ func fanOut(original image.Image, db *tiles.Database, tileSize, x1, y1, x2, y2 i
 				file.Close()
 			}
 		}
+
+		if opts.Opacity < 0 {
+			opts.Opacity = 0
+		} else if opts.Opacity > 100 {
+			opts.Opacity = 100
+		}
+
+		opacity := uint8(opts.Opacity * 255 / 100)
+		for x := 0; x < newimage.Bounds().Max.X; x++ {
+			for y := 0; y < newimage.Bounds().Max.Y; y++ {
+				r, g, b, _ := newimage.At(x, y).RGBA()
+				newColor := color.RGBA{uint8(r), uint8(g), uint8(b), opacity}
+
+				newimage.Set(x, y, newColor)
+			}
+		}
+
 		c <- newimage.SubImage(newimage.Rect)
 	}()
 

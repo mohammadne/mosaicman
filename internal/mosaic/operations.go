@@ -4,9 +4,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
-	"image/jpeg"
 	"math"
-	"os"
 
 	"github.com/mohammadne/mosaicman/internal/tiles"
 )
@@ -51,21 +49,13 @@ func sq(n float64) float64 {
 	return n * n
 }
 
-func backgroundBellowForeground(mask image.Image, b image.Image, f image.Image) image.Image {
-	//Create a new blank image m
-	m := image.NewRGBA(b.Bounds())
+func watermark(background image.Image, foreground image.Image) image.Image {
+	bounds := background.Bounds()
+	image3 := image.NewRGBA(bounds)
+	zp := image.Point{0, 0}
 
-	//Paste background image over m
-	draw.Draw(m, b.Bounds(), b, image.Point{0, 0}, draw.Src)
+	draw.Draw(image3, bounds, background, zp, draw.Src)
+	draw.Draw(image3, foreground.Bounds(), foreground, zp, draw.Over)
 
-	//Now paste logo image over m using a mask (ref. http://golang.org/doc/articles/image_draw.html )
-	//Goal is to have opacity value 50 of logo image, when we paste it
-	draw.DrawMask(m, b.Bounds(), f, image.Point{0, 0}, mask,
-		image.Point{0, 0}, draw.Src)
-
-	toimg, _ := os.Create("new.jpg")
-	defer toimg.Close()
-
-	jpeg.Encode(toimg, m, nil)
-	return m
+	return image3
 }

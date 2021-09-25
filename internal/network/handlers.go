@@ -63,13 +63,8 @@ func (server *server) upload(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"message":    "Image uploaded successfully",
-		"image-uuid": metadata.UUID,
+		"image_uuid": metadata.UUID,
 	})
-}
-
-type request struct {
-	UUID    string         `json:"image-uuid"`
-	Options models.Options `json:"options"`
 }
 
 var (
@@ -89,16 +84,17 @@ var (
 )
 
 func (server *server) process(c echo.Context) error {
-	requestData := new(request)
+	uuid := c.Param("image-uuid")
+	if uuid == "" {
+		return c.String(http.StatusBadRequest, "image uuid is missing")
+	}
+
+	requestData := new(models.Options)
 	if err := c.Bind(requestData); err != nil {
 		return c.JSON(http.StatusBadRequest, invalidDataErr)
 	}
 
-	metadata := &models.Metadata{
-		IP:   c.Request().RemoteAddr,
-		UUID: requestData.UUID,
-	}
-
+	metadata := &models.Metadata{IP: c.Request().RemoteAddr, UUID: uuid}
 	original, err := server.storage.Retrieve(context.TODO(), metadata)
 	if err != nil {
 		server.logger.Error("error in retrieving original", logger.Error(err))
@@ -106,7 +102,7 @@ func (server *server) process(c echo.Context) error {
 	}
 	defer original.Close()
 
-	err = mosaic.Process(original, metadata.UUID, requestData.Options, server.tiles)
+	err = mosaic.Process(original, uuid, requestData, server.tiles)
 	if err != nil {
 		server.logger.Error("error in processing mosaic", logger.Error(err))
 		return c.JSON(http.StatusInternalServerError, processErr)
