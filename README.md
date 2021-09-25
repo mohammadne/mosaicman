@@ -18,11 +18,17 @@
 >
 > it's completely free with a highly customizable mosaic server 
 
-## RESULT
+## RESULT Ex1
 
 <!-- RESULT -->
 <p align="center">
-  <img src="assets/result.png" />
+  <img src="assets/result-1.png" />
+</p>
+
+## RESULT Ex2
+
+<p align="center">
+  <img src="assets/result-2.jpg" />
 </p>
 
 ## OPTIONS
